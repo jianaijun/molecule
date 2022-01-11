@@ -157,42 +157,6 @@ export class FolderTreeService
         this.builtinService = container.resolve(BuiltinService);
     }
 
-    private isHiddenFile(file: IFolderTreeNodeProps) {
-        return !!file.name?.startsWith('.');
-    }
-
-    private sortTree(tree: IFolderTreeNodeProps[]) {
-        tree.sort((pre, cur) => {
-            // folder before file
-            if (pre.isLeaf !== cur.isLeaf) {
-                return pre.isLeaf! > cur.isLeaf! ? 1 : -1;
-            }
-
-            // in general, both have name
-            if (pre.name && cur.name) {
-                const isHiddenFilePre = Number(this.isHiddenFile(pre));
-                const isHiddenFileCur = Number(this.isHiddenFile(cur));
-                // one is hidden file and another is not
-                if (isHiddenFilePre ^ isHiddenFileCur) {
-                    return isHiddenFilePre ? -1 : 1;
-                }
-                // both are hidden files
-                if (isHiddenFilePre & isHiddenFilePre) {
-                    // hidden file
-                    return pre.name
-                        .substring(1)
-                        .localeCompare(cur.name.substring(1));
-                }
-                return pre.name.localeCompare(cur.name!);
-            }
-
-            // the node which is creating would without name
-            return pre.isEditable ? -1 : 1;
-        });
-
-        tree.forEach((treeNode) => this.sortTree(treeNode.children || []));
-    }
-
     public reset() {
         this.setState({
             folderTree: {
@@ -257,8 +221,6 @@ export class FolderTreeService
             // if root folder exists, then do nothing
             return;
         }
-
-        this.sortTree(folder.children || []);
         this.setState({
             folderTree: { ...folderTree, data: [folder] },
         });
@@ -357,7 +319,6 @@ export class FolderTreeService
         }
 
         cloneData[index] = tree!.obj;
-        this.sortTree(cloneData[index].children || []);
         this.setState({
             folderTree: {
                 ...this.state.folderTree,
@@ -402,10 +363,7 @@ export class FolderTreeService
             return;
         }
         tree.updateNode(id, restData);
-        if (index > -1) {
-            nextData[index] = tree.obj;
-            this.sortTree(nextData[index].children || []);
-        }
+        if (index > -1) nextData[index] = tree.obj;
         this.setState({
             folderTree,
         });
